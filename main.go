@@ -1,18 +1,27 @@
 package main
 
 import (
-	"bitbucket.org/blockchain/blockchain"
-	"encoding/json"
-	"fmt"
+	"bitbucket.org/blockchain/controllers"
+	"bitbucket.org/blockchain/environment"
+	"github.com/facebookgo/grace/gracehttp"
+	log "github.com/sirupsen/logrus"
+	"runtime"
 )
 
 func main() {
 
-	blockchain.AddBlock("random")
-	value := blockchain.GetBlockChain()
-	fmt.Println(json.Marshal(value))
-	blockchain.AddBlock("random2")
-	value = blockchain.GetBlockChain()
-	fmt.Println(json.Marshal(value))
+	runtime.GOMAXPROCS(runtime.NumCPU())
+	environment.Instance()
+	echo := environment.Instance().E
+	group := echo.Group("/v1")
+	controller := controllers.Controller{}
+	group.GET("/blocks", controller.GetBlock)
+	group.POST("/mine", controller.AddBlock)
+	group.GET("/ws", controller.CreateWebSocketConnection)
+	group.POST("/wss", controller.RegisterWebSocket)
 
+	port := environment.Instance().Get("server.port")
+	log.Infoln("[BlockChain] Server listening on: ", port)
+	echo.Server.Addr = port.(string)
+	echo.Logger.Fatal(gracehttp.Serve(echo.Server))
 }
