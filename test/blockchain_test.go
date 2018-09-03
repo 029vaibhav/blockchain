@@ -5,7 +5,9 @@ import (
 	"bitbucket.org/blockchain/block"
 	"bitbucket.org/blockchain/blockchain"
 	"bitbucket.org/blockchain/environment"
+	"bitbucket.org/blockchain/time"
 	"github.com/stretchr/testify/assert"
+	"strconv"
 )
 
 func TestGenesis(t *testing.T) {
@@ -89,6 +91,16 @@ func TestDifficultyTest(t *testing.T) {
 
 	difficulty = block.AdjustDifficulty(chain.Blocks[1], chain.Blocks[1].Timestamp, 1000)
 	assert.Equal(t, difficulty, chain.Blocks[1].Difficulty+1, "they should be equal")
+
+	environment.Instance().Set("mine_rate_in_ms", 10)
+
+	minute := time.Now().Minute()
+	for i := 0; i < 10000000; i++ {
+		chain.AddBlock(strconv.Itoa(i))
+		println(i)
+	}
+	minute2 := time.Now().Minute()
+	print(minute2 - minute)
 
 }
 
