@@ -1,13 +1,13 @@
 package test
 
-import "testing"
+import (
+	"testing"
+)
 import (
 	"bitbucket.org/blockchain/block"
 	"bitbucket.org/blockchain/blockchain"
 	"bitbucket.org/blockchain/environment"
-	"bitbucket.org/blockchain/time"
 	"github.com/stretchr/testify/assert"
-	"strconv"
 )
 
 func TestGenesis(t *testing.T) {
@@ -80,7 +80,12 @@ func TestHashFunction(t *testing.T) {
 
 	chain, _ := setup()
 	substring := chain.Blocks[1].Hash[0:chain.Blocks[1].Difficulty]
-	assert.Equal(t, substring, chain.Blocks[1].Difficulty, "they should be equal")
+
+	s := ""
+	for i := 0; i < chain.Blocks[1].Difficulty; i++ {
+		s = s + "0"
+	}
+	assert.Equal(t, substring, s, "they should be equal")
 
 }
 func TestDifficultyTest(t *testing.T) {
@@ -93,14 +98,6 @@ func TestDifficultyTest(t *testing.T) {
 	assert.Equal(t, difficulty, chain.Blocks[1].Difficulty+1, "they should be equal")
 
 	environment.Instance().Set("mine_rate_in_ms", 10)
-
-	minute := time.Now().Minute()
-	for i := 0; i < 10000000; i++ {
-		chain.AddBlock(strconv.Itoa(i))
-		println(i)
-	}
-	minute2 := time.Now().Minute()
-	print(minute2 - minute)
 
 }
 

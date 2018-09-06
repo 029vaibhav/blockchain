@@ -3,8 +3,7 @@ package block
 import (
 	"bitbucket.org/blockchain/environment"
 	"bitbucket.org/blockchain/time"
-	"crypto/sha256"
-	"encoding/hex"
+	"bitbucket.org/blockchain/util"
 	"github.com/google/go-cmp/cmp"
 	"strconv"
 	"strings"
@@ -69,10 +68,7 @@ func getHash(timeStamp string, lastHash string, data string, nonce int, difficul
 	buffer.WriteString(data)
 	buffer.WriteString(strconv.Itoa(nonce))
 	buffer.WriteString(strconv.Itoa(difficulty))
-	hash := sha256.New()
-	hash.Write([]byte(buffer.String()))
-	hashValue := hash.Sum(nil)
-	return hex.EncodeToString(hashValue)
+	return util.GetHash(buffer.String())
 
 }
 

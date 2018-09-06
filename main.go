@@ -17,11 +17,13 @@ func main() {
 	controller := controllers.Controller{}
 	group.GET("/blocks", controller.GetBlock)
 	group.POST("/mine", controller.AddBlock)
+	group.GET("/transactions", controller.GetTransactions)
+	group.POST("/transactions/transaction", controller.CreateTransaction)
 	group.GET("/ws", controller.CreateWebSocketConnection)
 	group.POST("/wss", controller.RegisterWebSocket)
 
 	port := environment.Instance().Get("server.port")
-	log.Infoln("[BlockChain] Server listening on: ", port)
+	log.Infoln("[BlockChain] Server listening on ", port)
 	echo.Server.Addr = port.(string)
 	echo.Logger.Fatal(gracehttp.Serve(echo.Server))
 }

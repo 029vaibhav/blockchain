@@ -5,6 +5,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"encoding/hex"
+	"math/big"
 )
 
 type Wallet struct {
@@ -20,7 +21,7 @@ func GenKeyPair() (PrivateKey, error) {
 	return *privateKey, e
 }
 
-func NewWallet() (Wallet, error) {
+func NewWallet(float642 float64) (Wallet, error) {
 
 	key, e := GenKeyPair()
 	if e != nil {
@@ -29,12 +30,11 @@ func NewWallet() (Wallet, error) {
 	publicKey := key.PublicKey
 	marshal := elliptic.Marshal(publicKey.Curve, publicKey.X, publicKey.Y)
 	s := hex.EncodeToString(marshal)
-	wallet := Wallet{0, key, s}
+	wallet := Wallet{float642, key, s}
 	return wallet, nil
 }
 
-func (wallet *Wallet) Sign(data string) string {
-
-	r, s, err := Sign(rand.Reader, wallet.KeyPair, []byte(data))
-	elliptic.Mar
+type Signature struct {
+	R *big.Int
+	S *big.Int
 }

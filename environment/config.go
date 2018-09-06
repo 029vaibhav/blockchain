@@ -1,7 +1,6 @@
 package environment
 
 import (
-	"bitbucket.org/aadhaartech/aadhaartech/utils"
 	"bitbucket.org/blockchain/util"
 	"github.com/google/go-cmp/cmp"
 	"github.com/labstack/echo"
@@ -129,7 +128,7 @@ func envSpecificConfig(file string) *viper.Viper {
 func setRequestID() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(ctx echo.Context) (err error) {
-			rid := utils.RandomIdGen()
+			rid := util.RandomIdGen()
 			res := ctx.Response()
 			ctx.Request().Header.Set(echo.HeaderXRequestID, rid)
 			res.Header().Set(echo.HeaderXRequestID, rid)
