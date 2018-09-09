@@ -22,7 +22,12 @@ func (c *Controller) CreateTransaction(ctx echo.Context) error {
 
 }
 
+func (c *Controller) GetWallet(ctx echo.Context) error {
+
+	return ctx.JSON(http.StatusOK, GetSuccessResponse(GetWallet()))
+}
+
 func (c *Controller) GetTransactions(ctx echo.Context) error {
 
-	return ctx.JSON(http.StatusOK, GetSuccessResponse(transaction.GetPool()))
+	return ctx.JSON(http.StatusOK, GetSuccessResponse(transaction.GetTransactions()))
 }

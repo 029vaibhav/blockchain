@@ -19,6 +19,6 @@ func (c *Controller) AddBlock(ctx echo.Context) error {
 	if newBlock.Data == "" {
 		return ctx.JSON(http.StatusBadRequest, GetBadResponse("data can not be empty"))
 	}
-	services.AddBlockChain(newBlock)
+	services.AddBlockToBlockChain(newBlock.Data)
 	return ctx.JSON(http.StatusOK, GetSuccessResponse(services.GetBlockChain()))
 }

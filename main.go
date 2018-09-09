@@ -21,6 +21,8 @@ func main() {
 	group.POST("/transactions/transaction", controller.CreateTransaction)
 	group.GET("/ws", controller.CreateWebSocketConnection)
 	group.POST("/wss", controller.RegisterWebSocket)
+	group.GET("/mine-transactions", controller.MineTransactions)
+	group.GET("/wallet", controller.GetWallet)
 
 	port := environment.Instance().Get("server.port")
 	log.Infoln("[BlockChain] Server listening on ", port)

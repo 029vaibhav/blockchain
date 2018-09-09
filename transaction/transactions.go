@@ -14,6 +14,11 @@ import (
 	"strings"
 )
 
+type BalanceCalc struct {
+	TimeStamp int
+	Outputs   []Output
+}
+
 type Output struct {
 	Amount  float64 `json:"amount"`
 	Address string  `json:"address"`
@@ -63,14 +68,28 @@ func NewTransaction(senderAdd *wallet.Wallet, recipient string, amount float64) 
 		outputs := []Output{
 			{senderAdd.Balance - amount, senderAdd.PublicKey},
 			{amount, recipient}}
-		existingTransaction = &Transaction{util.RandomIdGen(), input{}, outputs}
-		existingTransaction.SignTransaction(senderAdd)
+		existingTransaction = transactionWithOutput(outputs, senderAdd)
 		UpdateOrAddTransaction(existingTransaction)
 
 	} else {
 		existingTransaction.Update(senderAdd, recipient, amount)
 	}
 	return existingTransaction, nil
+}
+
+func transactionWithOutput(outputs []Output, senderAdd *wallet.Wallet) *Transaction {
+
+	transaction := &Transaction{util.RandomIdGen(), input{}, outputs}
+	transaction.SignTransaction(senderAdd)
+	return transaction
+}
+
+func RewardTransaction(minerWaller, blockChainWallet *wallet.Wallet) *Transaction {
+
+	outputs := []Output{
+		{50, minerWaller.PublicKey}}
+	return transactionWithOutput(outputs, blockChainWallet)
+
 }
 
 func (transaction *Transaction) SignTransaction(senderWallet *wallet.Wallet) error {

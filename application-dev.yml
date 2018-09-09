@@ -4,5 +4,5 @@ Logger:
 server:
     port: ":8080"
 
-difficulty: 10
-mine_rate_in_ms: 10000
+difficulty: 3
+mine_rate_in_ms: 100

@@ -3,10 +3,10 @@ package controllers
 import (
 	"github.com/labstack/echo"
 
-	"bitbucket.org/blockchain/blockchain"
 	"bitbucket.org/blockchain/p2pserver"
 	"bitbucket.org/blockchain/services"
-	"fmt"
+	"bitbucket.org/blockchain/transaction"
+	"bitbucket.org/blockchain/util"
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -29,7 +29,8 @@ type ConnectionRequest struct {
 	Domain string `json:"domain"`
 }
 
-var Clients = make(map[*websocket.Conn]*ClientType)
+var Clients = make(map[*websocket.Conn]bool)
+var disrupt = make(chan *websocket.Conn)
 
 func (c *Controller) CreateWebSocketConnection(ctx echo.Context) error {
 
@@ -57,14 +58,21 @@ func (c *ServerType) OpenConnection(request *ConnectionRequest) {
 		log.Error("connection failed with error :", err)
 	}
 	log.Infoln("connection successfully established")
-	replyChan := make(chan error, 1)
-	go c.ReadMessage(conn, replyChan)
-	go c.WriteMessage(conn, replyChan)
-	e := <-replyChan
-	if e != nil {
-		log.Error("error opening connection ", e)
-	}
+	Clients[conn] = true
+	defer conn.Close()
 
+	go ReadMessages(conn, disrupt)
+	go WriteMessages(disrupt)
+	handleClientError(disrupt)
+
+}
+
+func handleClientError(disrupt chan *websocket.Conn) {
+	connection := <-disrupt
+	if connection != nil {
+		connection.Close()
+		delete(Clients, connection)
+	}
 }
 
 func (c *ClientType) OpenConnection(w http.ResponseWriter, r *http.Request) {
@@ -73,38 +81,42 @@ func (c *ClientType) OpenConnection(w http.ResponseWriter, r *http.Request) {
 		return true
 	}
 	conn, e := c.Upgrader.Upgrade(w, r, nil)
-	defer conn.Close()
-	Clients[conn] = c
-	replyChan := make(chan error, 1)
-	go c.ReadMessage(conn, replyChan)
-	go c.WriteMessage(replyChan)
-
-	e = <-replyChan
 	if e != nil {
-		log.Error("error opening connection ", e)
+		log.Error("connection failed with error :", e)
 	}
+	Clients[conn] = true
+	defer conn.Close()
+	disrupt := make(chan *websocket.Conn)
+	go ReadMessages(conn, disrupt)
+	go WriteMessages(disrupt)
+	handleClientError(disrupt)
 
 }
 
-func (c *ClientType) ReadMessage(conn *websocket.Conn, er chan error) {
-
+func ReadMessages(conn *websocket.Conn, connection chan *websocket.Conn) {
 	for {
-		data := blockchain.BlockChain{}
+		data := p2pserver.P2pMessage{}
 		err := conn.ReadJSON(&data)
 		log.Infoln("reading data from client")
 		if err == nil {
-			services.Replace(data)
-		} else {
-			log.Error("error while reading the message from client ", err)
-			er <- err
-		}
+			switch data.Type {
+			case util.Blocks:
+				services.Replace(data.Chain)
+				break
+			case util.Transactions:
+				transaction.UpdateOrAddTransaction(&data.Transaction)
+				break
+			}
 
+		} else {
+			connection <- conn
+			log.Error("error while reading the message from client ", err)
+		}
 	}
 
 }
 
-func (c *ClientType) WriteMessage(er chan error) {
-
+func WriteMessages(connection chan *websocket.Conn) {
 	for {
 		msg := <-p2pserver.Broadcast
 		if msg != nil {
@@ -112,47 +124,91 @@ func (c *ClientType) WriteMessage(er chan error) {
 				log.Infoln("sending data to client")
 				err := client.WriteJSON(msg)
 				if err != nil {
-					log.Error("error while writing message to client ", err)
-					client.Close()
-					delete(Clients, client)
+					connection <- client
 				}
 				log.Infoln("data sent")
 			}
+		} else {
+			log.Infoln("nothing to consume")
 		}
-
 	}
 }
 
-func (c *ServerType) WriteMessage(conn *websocket.Conn, er chan error) {
+//
+//func (c *ClientType) ReadMessage(conn *websocket.Conn, er chan error) {
+//
+//	for {
+//		readMessageAndReplace(conn, er)
+//	}
+//
+//}
 
-	for {
-		msg := <-p2pserver.Broadcast
-		if msg != nil {
-			log.Infoln("writing data to server")
-			err := conn.WriteJSON(msg)
-			if err != nil {
-				log.Info("error while sending data to server ", err)
-				conn.Close()
-				er <- err
-			} else {
-				log.Info("data send to the server")
-			}
-		}
+//func readMessageAndReplace(conn *websocket.Conn, er chan error) {
+//	data := p2pserver.P2pMessage{}
+//	err := conn.ReadJSON(&data)
+//	log.Infoln("reading data from client")
+//	if err == nil {
+//
+//		switch data.Type {
+//
+//		case util.Blocks:
+//			services.Replace(data.Chain)
+//			break
+//		case util.Transactions:
+//			transaction.UpdateOrAddTransaction(&data.Transaction)
+//			break
+//		}
+//
+//	} else {
+//		log.Error("error while reading the message from client ", err)
+//		er <- err
+//	}
+//}
 
-	}
+//func (c *ClientType) WriteMessage(er chan error) {
+//
+//	for {
+//		msg := <-p2pserver.Broadcast
+//		if msg != nil {
+//			for client := range Clients {
+//				log.Infoln("sending data to client")
+//				err := client.WriteJSON(msg)
+//				if err != nil {
+//					log.Error("error while writing message to client ", err)
+//					client.Close()
+//					delete(Clients, client)
+//				}
+//				log.Infoln("data sent")
+//			}
+//		}
+//
+//	}
+//}
 
-}
+//func (c *ServerType) WriteMessage(conn *websocket.Conn, er chan error) {
+//
+//	for {
+//		msg := <-p2pserver.Broadcast
+//		if msg != nil {
+//			log.Infoln("writing data to server")
+//			err := conn.WriteJSON(msg)
+//			if err != nil {
+//				log.Info("error while sending data to server ", err)
+//				conn.Close()
+//				er <- err
+//			} else {
+//				log.Info("data send to the server")
+//			}
+//		}
+//
+//	}
+//
+//}
 
-func (c *ServerType) ReadMessage(conn *websocket.Conn, er chan error) {
-	defer conn.Close()
-	for {
-		data := blockchain.BlockChain{}
-		err := conn.ReadJSON(&data)
-		if err != nil {
-			er <- fmt.Errorf("Error receiving data: %v", err)
-			return
-		}
-		services.Replace(data)
-	}
-
-}
+//func (c *ServerType) ReadMessage(conn *websocket.Conn, er chan error) {
+//	defer conn.Close()
+//	for {
+//		readMessageAndReplace(conn, er)
+//	}
+//
+//}

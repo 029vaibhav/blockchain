@@ -11,13 +11,14 @@ type BlockChain struct {
 	Blocks []block.Block `json:"blocks"`
 }
 
-func (b *BlockChain) AddBlock(data string) {
+func (b *BlockChain) AddBlock(data interface{}) block.Block {
 
 	if b.Blocks == nil {
 		b.Blocks = append(b.Blocks, block.Genesis())
 	}
 	minedBlock := block.MineBlock(b.Blocks[len(b.Blocks)-1], data)
 	b.Blocks = append(b.Blocks, minedBlock)
+	return minedBlock
 }
 
 func (b *BlockChain) IsValidChain(chain BlockChain) bool {
@@ -36,6 +37,7 @@ func (b *BlockChain) IsValidChain(chain BlockChain) bool {
 		if currentBlock.LastHash != lastBlock.Hash || currentBlock.Hash != block.GetBlockHash(currentBlock) {
 			return false
 		}
+
 	}
 	return true
 }

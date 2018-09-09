@@ -74,10 +74,10 @@ func (e *env) init() {
 
 func (e *env) setLogLevel() {
 
-	if cmp.Equal(util.LOG_LEVEL, "debug") {
+	if cmp.Equal(util.LogLevel, "debug") {
 		log.SetLevel(log.DebugLevel)
 		log.Debugln("Debug enabled")
-	} else if cmp.Equal(util.LOG_LEVEL, "info") {
+	} else if cmp.Equal(util.LogLevel, "info") {
 		log.SetLevel(log.InfoLevel)
 		log.Debugln("info enabled")
 	}

@@ -1,7 +1,10 @@
 package util
 
 const (
-	LOG_LEVEL = "Logger.Level"
+	LogLevel         = "Logger.Level"
+	Blocks           = "block"
+	Transactions     = "transaction"
+	ClearTransaction = "clearTransaction"
 )
 
 type Error struct {

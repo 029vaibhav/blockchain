@@ -21,20 +21,26 @@ func GenKeyPair() (PrivateKey, error) {
 	return *privateKey, e
 }
 
-func NewWallet(float642 float64) (Wallet, error) {
+func NewWallet(float642 float64) (*Wallet, error) {
 
 	key, e := GenKeyPair()
 	if e != nil {
-		return Wallet{}, e
+		return &Wallet{}, e
 	}
 	publicKey := key.PublicKey
 	marshal := elliptic.Marshal(publicKey.Curve, publicKey.X, publicKey.Y)
 	s := hex.EncodeToString(marshal)
 	wallet := Wallet{float642, key, s}
-	return wallet, nil
+	return &wallet, nil
 }
 
 type Signature struct {
 	R *big.Int
 	S *big.Int
+}
+
+func BlockChainWallet() *Wallet {
+	wallet, _ := NewWallet(1000)
+	wallet.PublicKey = "block-chain-wallet"
+	return wallet
 }
