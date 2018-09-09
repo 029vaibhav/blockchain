@@ -56,7 +56,11 @@ func AdjustDifficulty(block Block, s string, mineRate int) int {
 	if i > currentTimeStamp {
 		return difficulty + 1
 	} else {
-		return difficulty - 1
+		if difficulty != 0 {
+			return difficulty - 1
+		}
+		return difficulty
+
 	}
 
 }

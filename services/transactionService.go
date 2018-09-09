@@ -6,7 +6,6 @@ import (
 	. "bitbucket.org/blockchain/transaction"
 	"bitbucket.org/blockchain/util"
 	"bitbucket.org/blockchain/wallet"
-	"github.com/spf13/cast"
 	. "strconv"
 )
 
@@ -48,9 +47,8 @@ func CalculateBalance() float64 {
 		if v.Data == nil {
 			continue
 		}
-		transactionList := cast.ToSlice(v.Data)
-		for _, value := range transactionList {
-			v := value.(Transaction)
+		transactionList := v.Data.([]Transaction)
+		for _, v := range transactionList {
 			if v.Input.Address == WalletAddress.PublicKey {
 				if latestTransaction == nil {
 					latestTransaction = &v
@@ -70,6 +68,7 @@ func CalculateBalance() float64 {
 					outputs = append(outputs, output)
 				}
 			}
+			calc.Outputs = outputs
 			transactions = append(transactions, calc)
 
 		}
